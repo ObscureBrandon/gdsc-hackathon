@@ -5,12 +5,18 @@ import { Button } from "~/components/ui/button";
 import { useSession } from "next-auth/react";
 import { signIn, signOut } from "next-auth/react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const { data: session } = useSession();
+  const router = useRouter();
+
+  if (session) {
+    router.push("/dashboard");
+  }
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
