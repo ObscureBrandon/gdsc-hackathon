@@ -7,6 +7,7 @@ export default function HomePage() {
 
   return (
     <main>
+      <h1>This is on dev</h1>
       {session && <h1>If you see this, you&apos;re signed in!</h1>}
       {session ? (
         <button onClick={() => signOut()}>Sign Out</button>
