@@ -16,7 +16,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <SessionProvider>
-      <html lang="en" className={`${GeistSans.variable}`}>
+      <html lang="en" className={`${GeistSans.variable} dark`}>
         <body
           className={`bg-gradient-to-b from-slate-900 to-slate-950 antialiased`}
         >

@@ -5,6 +5,7 @@ import { Button } from "~/components/ui/button";
 import { useSession } from "next-auth/react";
 import { signIn, signOut } from "next-auth/react";
 import Image from "next/image";
+import Link from "next/link";
 
 export function LoginForm({
   className,
@@ -13,7 +14,7 @@ export function LoginForm({
   const { data: session } = useSession();
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-6 px-5", className)} {...props}>
       <div className="flex flex-col gap-6">
         <div className="flex flex-col items-center gap-2">
           <a href="#" className="flex flex-col items-center gap-2 font-medium">
@@ -63,13 +64,16 @@ export function LoginForm({
       </div>
       <div className="text-center text-sm text-slate-300">
         By clicking continue, you agree to our{" "}
-        <a href="#" className="underline">
+        <Link
+          href="/terms-of-service"
+          className="text-lime-300 hover:underline"
+        >
           Terms of Service
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a href="#" className="underline">
+        <Link href="/privacy-policy" className="text-lime-300 hover:underline">
           Privacy Policy
-        </a>
+        </Link>
         .
       </div>
     </div>
