@@ -21,7 +21,6 @@ export default function RootLayout({
           className={`bg-gradient-to-b from-slate-900 to-slate-950 antialiased`}
         >
           <div className="flex min-h-screen flex-col">
-            {/* <Navbar /> */}
             <main className="flex-grow overflow-auto scroll-smooth">
               {children}
               <footer className="flex justify-center text-center text-slate-400">

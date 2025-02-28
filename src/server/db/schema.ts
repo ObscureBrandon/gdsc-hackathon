@@ -30,11 +30,6 @@ export const users = createTable("user", {
   image: varchar("image", { length: 255 }),
 });
 
-export const usersRelations = relations(users, ({ many }) => ({
-  accounts: many(accounts),
-  bankAccounts: many(bankAccounts),
-}));
-
 export const accounts = createTable(
   "account",
   {
@@ -114,7 +109,8 @@ export const bankAccounts = createTable("bank_account", {
     .$defaultFn(() => crypto.randomUUID()),
   userId: varchar("user_id", { length: 255 })
     .notNull()
-    .references(() => users.id),
+    .references(() => users.id)
+    .unique(), // This ensures one account per user
   accountNumber: varchar("account_number", { length: 20 }).notNull().unique(),
   accountName: varchar("account_name", { length: 100 }).notNull(),
   balance: decimal("balance", { precision: 12, scale: 2 }) // 12 digits, 2 decimal places
@@ -126,6 +122,43 @@ export const bankAccounts = createTable("bank_account", {
     withTimezone: true,
   }).default(sql`CURRENT_TIMESTAMP`),
 });
+
+// Add cards table
+export const cards = createTable("card", {
+  id: varchar("id", { length: 255 })
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: varchar("user_id", { length: 255 })
+    .notNull()
+    .references(() => users.id)
+    .unique(), // This ensures one card per user
+  cardNumber: varchar("card_number", { length: 19 }).notNull().unique(),
+  cardholderName: varchar("cardholder_name", { length: 100 }).notNull(),
+  expiryDate: varchar("expiry_date", { length: 5 }).notNull(), // MM/YY format
+  cvv: varchar("cvv", { length: 4 }).notNull(),
+  cardType: varchar("card_type", { length: 20 }).notNull(), // visa, mastercard, etc.
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  }).default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const cardsRelations = relations(cards, ({ one }) => ({
+  user: one(users, { fields: [cards.userId], references: [users.id] }),
+}));
+
+// Update user relations to include cards
+export const usersRelations = relations(users, ({ one, many }) => ({
+  accounts: one(accounts, {
+    fields: [users.id],
+    references: [accounts.userId],
+  }),
+  bankAccount: one(bankAccounts), // Changed to one
+  card: one(cards), // Added card relation
+  transactions: many(transactions, { relationName: "userTransactions" }),
+}));
 
 export const bankAccountsRelations = relations(
   bankAccounts,

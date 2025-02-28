@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowDownIcon,
   ArrowRightIcon,
@@ -44,84 +44,59 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Separator } from "~/components/ui/separator";
-import { AreaChart, BarChart, LineChart } from "~/components/chart";
+import { FinancialAreaChart } from "~/components/area-chart-interactive";
 import { signOut } from "next-auth/react";
+import { getRecentTransactions } from "~/server/actions/recentTransactions";
+import { getUserBankAccount } from "~/server/actions/bankAccounts";
+import { getUserCard } from "~/server/actions/cardManagement";
+import { Skeleton } from "~/components/ui/skeleton";
 
 export default function Dashboard() {
   const [showBalance, setShowBalance] = useState(true);
   const pathname = usePathname();
 
-  // Mock data for charts
-  const areaChartData = [
-    { name: "Jan", total: 1200 },
-    { name: "Feb", total: 1900 },
-    { name: "Mar", total: 1500 },
-    { name: "Apr", total: 2400 },
-    { name: "May", total: 2800 },
-    { name: "Jun", total: 2600 },
-    { name: "Jul", total: 3200 },
-  ];
+  // State for data from server actions
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [bankAccount, setBankAccount] = useState<any | null>(null);
+  const [card, setCard] = useState<any | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const barChartData = [
-    { name: "Mon", total: 120 },
-    { name: "Tue", total: 220 },
-    { name: "Wed", total: 190 },
-    { name: "Thu", total: 270 },
-    { name: "Fri", total: 320 },
-    { name: "Sat", total: 190 },
-    { name: "Sun", total: 90 },
-  ];
+  // Fetch data on component mount
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true);
 
-  const lineChartData = [
-    { name: "Week 1", value: 400 },
-    { name: "Week 2", value: 300 },
-    { name: "Week 3", value: 500 },
-    { name: "Week 4", value: 780 },
-  ];
+      try {
+        const [transactionsData, accountData, cardData] = await Promise.all([
+          getRecentTransactions(10),
+          getUserBankAccount(),
+          getUserCard(),
+        ]);
+        setTransactions(transactionsData);
+        setBankAccount(accountData);
+        setCard(cardData);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
 
-  // Mock transaction data
-  const transactions = [
-    {
-      id: "t1",
-      name: "Amazon",
-      type: "expense",
-      amount: 49.99,
-      date: "Today, 2:34 PM",
-      status: "completed",
-    },
-    {
-      id: "t2",
-      name: "Salary Deposit",
-      type: "income",
-      amount: 2500.0,
-      date: "Yesterday, 9:12 AM",
-      status: "completed",
-    },
-    {
-      id: "t3",
-      name: "Netflix",
-      type: "expense",
-      amount: 15.99,
-      date: "Jul 12, 2023",
-      status: "completed",
-    },
-    {
-      id: "t4",
-      name: "Transfer to Sarah",
-      type: "transfer",
-      amount: 200.0,
-      date: "Jul 10, 2023",
-      status: "completed",
-    },
-    {
-      id: "t5",
-      name: "Uber",
-      type: "expense",
-      amount: 24.5,
-      date: "Jul 8, 2023",
-      status: "completed",
-    },
-  ];
+    fetchData();
+  }, []);
+
+  // Calculate account totals
+  const totalBalance = bankAccount ? bankAccount.balance : 0;
+
+  const income = transactions
+    .filter((tx) => !tx.isOutgoing)
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  const expenses = transactions
+    .filter((tx) => tx.isOutgoing)
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  const savings = income - expenses;
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
@@ -133,7 +108,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="bg-background sticky top-0 z-30 flex h-16 items-center gap-4 border-b px-4 md:px-6">
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="outline" size="icon" className="md:hidden">
@@ -162,9 +137,9 @@ export default function Dashboard() {
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    "text-muted-foreground hover:text-primary flex items-center gap-2 rounded-lg px-3 py-2",
+                    "flex items-center gap-2 rounded-lg px-3 py-2 text-muted-foreground hover:text-primary",
                     pathname === item.href &&
-                      "bg-muted text-primary font-medium",
+                      "bg-muted font-medium text-primary",
                   )}
                 >
                   <item.icon className="h-5 w-5" />
@@ -202,11 +177,11 @@ export default function Dashboard() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage
-                    //src="/placeholder.svg?height=32&width=32"
-                    alt="User"
-                  />
-                  <AvatarFallback>JD</AvatarFallback>
+                  <AvatarImage alt="User" />
+                  <AvatarFallback>
+                    {/* Get user initials or use placeholder */}
+                    JD
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -231,15 +206,15 @@ export default function Dashboard() {
         </div>
       </header>
       <div className="grid flex-1 md:grid-cols-[240px_1fr]">
-        <aside className="bg-muted/40 hidden border-r md:block">
+        <aside className="hidden border-r bg-muted/40 md:block">
           <nav className="grid gap-2 p-4 text-sm">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "text-muted-foreground hover:text-primary flex items-center gap-3 rounded-lg px-3 py-2",
-                  pathname === item.href && "bg-muted text-primary font-medium",
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground hover:text-primary",
+                  pathname === item.href && "bg-muted font-medium text-primary",
                 )}
               >
                 <item.icon className="h-4 w-4" />
@@ -269,12 +244,18 @@ export default function Dashboard() {
                 </Button>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {showBalance ? "$12,580.00" : "••••••••"}
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  +20.1% from last month
-                </p>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-full" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">
+                      {showBalance ? `$${totalBalance.toFixed(2)}` : "••••••••"}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {bankAccount ? "Active account" : "No account linked"}
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
             <Card>
@@ -283,12 +264,18 @@ export default function Dashboard() {
                 <DollarSignIcon className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {showBalance ? "$4,395.00" : "••••••••"}
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  +12.5% from last month
-                </p>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-full" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">
+                      {showBalance ? `$${income.toFixed(2)}` : "••••••••"}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      From recent transactions
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
             <Card>
@@ -297,12 +284,18 @@ export default function Dashboard() {
                 <DollarSignIcon className="h-4 w-4 text-red-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {showBalance ? "$2,150.00" : "••••••••"}
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  -5.2% from last month
-                </p>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-full" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">
+                      {showBalance ? `$${expenses.toFixed(2)}` : "••••••••"}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      From recent transactions
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
             <Card>
@@ -311,72 +304,45 @@ export default function Dashboard() {
                 <WalletIcon className="h-4 w-4 text-blue-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {showBalance ? "$6,035.00" : "••••••••"}
+                {isLoading ? (
+                  <Skeleton className="h-8 w-full" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">
+                      {showBalance ? `$${savings.toFixed(2)}` : "••••••••"}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Income - Expenses
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {isLoading ? (
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div>
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="mt-2 h-3 w-24" />
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="mt-2 h-3 w-16" />
+                  </div>
                 </div>
-                <p className="text-muted-foreground text-xs">
-                  +8.3% from last month
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="lg:col-span-4">
-              <CardHeader>
-                <CardTitle>Financial Overview</CardTitle>
-                <CardDescription>
-                  Your financial activity for the past 7 months
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pl-2">
-                <AreaChart
-                  data={areaChartData}
-                  index="name"
-                  categories={["total"]}
-                  colors={["primary"]}
-                  valueFormatter={(value) => `$${value.toLocaleString()}`}
-                  className="h-[300px]"
-                />
-              </CardContent>
-            </Card>
-            <Card className="lg:col-span-3">
-              <CardHeader>
-                <CardTitle>Weekly Spending</CardTitle>
-                <CardDescription>
-                  Your spending pattern for the current week
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pl-2">
-                <BarChart
-                  data={barChartData}
-                  index="name"
-                  categories={["total"]}
-                  colors={["primary"]}
-                  valueFormatter={(value) => `$${value.toLocaleString()}`}
-                  className="h-[300px]"
-                />
-              </CardContent>
-            </Card>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="lg:col-span-3">
-              <CardHeader>
-                <CardTitle>Monthly Savings</CardTitle>
-                <CardDescription>
-                  Your savings trend for the past month
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pl-2">
-                <LineChart
-                  data={lineChartData}
-                  index="name"
-                  categories={["value"]}
-                  colors={["primary"]}
-                  valueFormatter={(value) => `$${value.toLocaleString()}`}
-                  className="h-[300px]"
-                />
-              </CardContent>
-            </Card>
+              ))}
+            </div>
+          ) : (
+            <FinancialAreaChart />
+          )}
+
+          <div className="grid">
             <Card className="lg:col-span-4">
               <CardHeader>
                 <CardTitle>Recent Transactions</CardTitle>
@@ -385,69 +351,93 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {transactions.map((transaction) => (
-                    <div
-                      key={transaction.id}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div
-                          className={cn(
-                            "flex h-10 w-10 items-center justify-center rounded-full",
-                            transaction.type === "expense"
-                              ? "bg-red-100"
-                              : transaction.type === "income"
-                                ? "bg-green-100"
-                                : "bg-blue-100",
-                          )}
-                        >
-                          {transaction.type === "expense" ? (
-                            <ArrowUpIcon className="h-5 w-5 text-red-500" />
-                          ) : transaction.type === "income" ? (
-                            <ArrowDownIcon className="h-5 w-5 text-green-500" />
-                          ) : (
-                            <ArrowRightIcon className="h-5 w-5 text-blue-500" />
-                          )}
+                {isLoading ? (
+                  <div className="space-y-4">
+                    {[...Array(5)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-4">
+                          <Skeleton className="h-10 w-10 rounded-full" />
+                          <div>
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="mt-2 h-3 w-24" />
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium">
-                            {transaction.name}
-                          </p>
-                          <p className="text-muted-foreground text-xs">
-                            {transaction.date}
-                          </p>
+                        <div className="text-right">
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="mt-2 h-3 w-16" />
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p
-                          className={cn(
-                            "text-sm font-medium",
-                            transaction.type === "expense"
-                              ? "text-red-500"
-                              : transaction.type === "income"
-                                ? "text-green-500"
-                                : "",
-                          )}
-                        >
-                          {transaction.type === "expense"
-                            ? "-"
-                            : transaction.type === "income"
-                              ? "+"
-                              : ""}
-                          ${transaction.amount.toFixed(2)}
-                        </p>
-                        <Badge variant="outline" className="text-xs">
-                          {transaction.status}
-                        </Badge>
+                    ))}
+                  </div>
+                ) : transactions.length > 0 ? (
+                  <div className="space-y-4">
+                    {transactions.map((transaction) => (
+                      <div
+                        key={transaction.id}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div
+                            className={cn(
+                              "flex h-10 w-10 items-center justify-center rounded-full",
+                              transaction.isOutgoing
+                                ? "bg-red-100"
+                                : "bg-green-100",
+                            )}
+                          >
+                            {transaction.isOutgoing ? (
+                              <ArrowUpIcon className="h-5 w-5 text-red-500" />
+                            ) : (
+                              <ArrowDownIcon className="h-5 w-5 text-green-500" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">
+                              {transaction.merchantName ||
+                                (transaction.isOutgoing
+                                  ? "Payment"
+                                  : "Deposit")}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(
+                                transaction.createdAt,
+                              ).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p
+                            className={cn(
+                              "text-sm font-medium",
+                              transaction.isOutgoing
+                                ? "text-red-500"
+                                : "text-green-500",
+                            )}
+                          >
+                            {transaction.isOutgoing ? "-" : "+"}$
+                            {showBalance
+                              ? transaction.amount.toFixed(2)
+                              : "••••••"}
+                          </p>
+                          <Badge variant="outline" className="text-xs">
+                            {transaction.status}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex h-[200px] items-center justify-center text-muted-foreground">
+                    No recent transactions
+                  </div>
+                )}
               </CardContent>
               <CardFooter>
-                <Button variant="outline" className="w-full">
-                  View All Transactions
+                <Button variant="outline" className="w-full" asChild>
+                  <Link href="/transactions">View All Transactions</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -459,22 +449,14 @@ export default function Dashboard() {
                 <CardDescription>Frequently used features</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <Button className="flex h-24 flex-col items-center justify-center space-y-2">
                     <ArrowRightIcon className="h-6 w-6" />
                     <span>Send Money</span>
                   </Button>
                   <Button className="flex h-24 flex-col items-center justify-center space-y-2">
-                    <CreditCardIcon className="h-6 w-6" />
-                    <span>Add Card</span>
-                  </Button>
-                  <Button className="flex h-24 flex-col items-center justify-center space-y-2">
-                    <PieChartIcon className="h-6 w-6" />
-                    <span>Investments</span>
-                  </Button>
-                  <Button className="flex h-24 flex-col items-center justify-center space-y-2">
                     <WalletIcon className="h-6 w-6" />
-                    <span>Top Up</span>
+                    <span>Deposit Money</span>
                   </Button>
                 </div>
               </CardContent>
@@ -486,79 +468,138 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="cards">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="cards">Cards</TabsTrigger>
-                    <TabsTrigger value="bank">Bank Accounts</TabsTrigger>
-                    <TabsTrigger value="crypto">Crypto</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="cards">Card</TabsTrigger>
+                    <TabsTrigger value="bank">Bank Account</TabsTrigger>
                   </TabsList>
                   <TabsContent value="cards" className="space-y-4 pt-4">
-                    <div className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 p-6 text-white">
-                      <div className="flex justify-between">
-                        <div>
-                          <p className="text-sm opacity-80">Balance</p>
-                          <p className="text-2xl font-bold">
-                            {showBalance ? "$8,250.00" : "••••••••"}
-                          </p>
-                        </div>
-                        <CreditCardIcon className="h-8 w-8 opacity-80" />
+                    {isLoading ? (
+                      <div className="space-y-3">
+                        <Skeleton className="h-[72px] w-full rounded-lg" />
                       </div>
-                      <div className="mt-6">
-                        <p className="text-sm opacity-80">Card Number</p>
-                        <p className="text-lg">
-                          {showBalance
-                            ? "•••• •••• •••• 4242"
-                            : "•••• •••• •••• ••••"}
-                        </p>
-                      </div>
-                      <div className="mt-6 flex justify-between">
-                        <div>
-                          <p className="text-xs opacity-80">VALID THRU</p>
-                          <p>{showBalance ? "12/25" : "••/••"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs opacity-80">CVV</p>
-                          <p>{showBalance ? "•••" : "•••"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs opacity-80">CARD HOLDER</p>
-                          <p>John Doe</p>
-                        </div>
-                      </div>
-                    </div>
-                    <Button variant="outline" className="w-full">
-                      <CreditCardIcon className="mr-2 h-4 w-4" />
-                      Add New Card
-                    </Button>
-                  </TabsContent>
-                  <TabsContent value="bank" className="pt-4">
-                    <div className="rounded-lg border p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-muted flex h-10 w-10 items-center justify-center rounded-full">
-                            <DollarSignIcon className="h-5 w-5" />
+                    ) : (
+                      card && (
+                        <div className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 p-6 text-white">
+                          <div className="flex justify-between">
+                            <div>
+                              <p className="text-sm opacity-80">Card Holder</p>
+                              <p className="text-lg font-bold">
+                                {card.cardholderName}
+                              </p>
+                            </div>
+                            <CreditCardIcon className="h-8 w-8 opacity-80" />
                           </div>
-                          <div>
-                            <p className="font-medium">Chase Bank</p>
-                            <p className="text-muted-foreground text-sm">
-                              {showBalance ? "••••4567" : "••••••••"}
+                          <div className="mt-6 flex flex-col space-y-2">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm opacity-80">Card Number</p>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setShowBalance(!showBalance)}
+                                className="h-8 w-8"
+                              >
+                                {showBalance ? (
+                                  <EyeOffIcon className="h-4 w-4" />
+                                ) : (
+                                  <EyeIcon className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
+                            <p className="text-lg">
+                              {showBalance
+                                ? card.cardNumber
+                                : "•••• •••• •••• ••••"}
                             </p>
                           </div>
+                          <div className="mt-6 flex justify-between">
+                            <div>
+                              <p className="text-xs opacity-80">VALID THRU</p>
+                              <p>{showBalance ? card.expiryDate : "••/••"}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs opacity-80">CVV</p>
+                              <p>{showBalance ? card.cvv : "•••"}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs opacity-80">CARD TYPE</p>
+                              <p>{card.cardType}</p>
+                            </div>
+                          </div>
+                          <div className="mt-4">
+                            <Badge
+                              variant={card.isActive ? "default" : "outline"}
+                            >
+                              {card.isActive ? "Active" : "Inactive"}
+                            </Badge>
+                          </div>
                         </div>
-                        <Badge>Primary</Badge>
-                      </div>
-                    </div>
+                      )
+                    )}
                   </TabsContent>
-                  <TabsContent value="crypto" className="pt-4">
-                    <div className="flex flex-col items-center justify-center py-8 text-center">
-                      <DollarSignIcon className="text-muted-foreground h-10 w-10" />
-                      <h3 className="mt-4 text-lg font-medium">
-                        No Crypto Wallets
-                      </h3>
-                      <p className="text-muted-foreground mt-2 text-sm">
-                        You haven't added any cryptocurrency wallets yet.
-                      </p>
-                      <Button className="mt-4">Connect Wallet</Button>
-                    </div>
+                  <TabsContent value="bank" className="pt-4">
+                    {isLoading ? (
+                      <div className="space-y-3">
+                        <Skeleton className="h-[72px] w-full rounded-lg" />
+                      </div>
+                    ) : (
+                      bankAccount && (
+                        <div className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 p-6 text-white">
+                          <div className="flex justify-between">
+                            <div>
+                              <p className="text-sm opacity-80">Account Name</p>
+                              <p className="text-lg font-bold">
+                                {bankAccount.accountName}
+                              </p>
+                            </div>
+                            <DollarSignIcon className="h-8 w-8 opacity-80" />
+                          </div>
+
+                          <div className="mt-6 flex flex-col space-y-2">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm opacity-80">Card Number</p>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setShowBalance(!showBalance)}
+                                className="h-8 w-8"
+                              >
+                                {showBalance ? (
+                                  <EyeOffIcon className="h-4 w-4" />
+                                ) : (
+                                  <EyeIcon className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
+                            <p className="text-lg">
+                              {showBalance
+                                ? bankAccount.accountNumber
+                                : "*".repeat(8) +
+                                  bankAccount.accountNumber.slice(-4)}
+                            </p>
+                          </div>
+                          <div className="mt-6 flex justify-between">
+                            <div>
+                              <p className="text-xs opacity-80">BALANCE</p>
+                              <p>
+                                {showBalance
+                                  ? `$${bankAccount.balance.toFixed(2)}`
+                                  : "••••••"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs opacity-80">STATUS</p>
+                              <Badge
+                                variant={
+                                  bankAccount.isActive ? "default" : "outline"
+                                }
+                              >
+                                {bankAccount.isActive ? "Active" : "Inactive"}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    )}
                   </TabsContent>
                 </Tabs>
               </CardContent>
