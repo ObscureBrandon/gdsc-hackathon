@@ -59,6 +59,7 @@ export default function OnboardingPage() {
     const checkUserStatus = async () => {
       // Don't do anything until session is loaded
       if (!session) {
+        router.replace("/"); // Redirect to login if session is not loaded
         return;
       }
 
@@ -68,6 +69,8 @@ export default function OnboardingPage() {
       if (session.user?.handle) {
         router.replace("/dashboard");
         return;
+      } else if (!session.user?.handle) {
+        router.replace("/onboarding");
       }
 
       // Only attempt seeding once
