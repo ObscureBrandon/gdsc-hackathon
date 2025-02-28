@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   ArrowDownIcon,
   ArrowRightIcon,
@@ -11,9 +10,13 @@ import {
   RefreshCwIcon,
   WalletIcon,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { cn } from "~/lib/utils";
+import { useEffect, useState } from "react";
+import { FinancialAreaChart } from "~/components/area-chart-interactive";
+import { SendMoneyDialog } from "~/components/SendMoneyDialog";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -23,14 +26,11 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { Tabs, TabsContent } from "~/components/ui/tabs";
-import { Badge } from "~/components/ui/badge";
-import { FinancialAreaChart } from "~/components/area-chart-interactive";
-import { useSession } from "next-auth/react";
-import { getRecentTransactions } from "~/server/actions/recentTransactions";
-import { getUserBankAccount } from "~/server/actions/bankAccounts";
 import { Skeleton } from "~/components/ui/skeleton";
-import { SendMoneyDialog } from "~/components/SendMoneyDialog";
+import { Tabs, TabsContent } from "~/components/ui/tabs";
+import { cn } from "~/lib/utils";
+import { getUserBankAccount } from "~/server/actions/bankAccounts";
+import { getRecentTransactions } from "~/server/actions/recentTransactions";
 
 export function DashboardContent() {
   const [showBalance, setShowBalance] = useState(true);
@@ -326,7 +326,7 @@ export function DashboardContent() {
                         {transaction.isOutgoing ? "-" : "+"}$
                         {showBalance ? transaction.amount.toFixed(2) : "••••••"}
                       </p>
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-xs uppercase">
                         {transaction.status}
                       </Badge>
                     </div>
@@ -417,7 +417,7 @@ export function DashboardContent() {
                 ) : bankAccount ? (
                   <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-indigo-600 to-purple-400 p-6 text-white">
                     {/* Animated gradient overlay - added background-size property */}
-                    <div className="absolute inset-0 animate-gradient-x bg-gradient-to-r from-indigo-600/30 via-purple-500/30 to-indigo-600/30 bg-[length:200%_100%]" />
+                    <div className="animate-gradient-x absolute inset-0 bg-gradient-to-r from-indigo-600/30 via-purple-500/30 to-indigo-600/30 bg-[length:200%_100%]" />
 
                     {/* Card content */}
                     <div className="relative z-10">
