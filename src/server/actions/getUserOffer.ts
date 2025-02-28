@@ -51,6 +51,7 @@ export async function getUserOffer(): Promise<{
 
     const metrics = await getCurrentUserMetrics();
 
+    // meow
     const response = await fetch(
       "https://3b8a-196-132-53-64.ngrok-free.app/predict",
       {
