@@ -64,8 +64,6 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-
-    
   }
 }
 
@@ -91,4 +89,21 @@
 .dark [data-chart] .recharts-cartesian-grid-horizontal line,
 .dark [data-chart] .recharts-cartesian-grid-vertical line {
   stroke: var(--chart-grid-color);
+}
+
+@keyframes gradient-x {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-x {
+  background-size: 200% 100%;
+  animation: gradient-x 5s ease infinite;
 }
