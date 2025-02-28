@@ -129,7 +129,7 @@ export default function ProtectedLayout({
                 <Avatar className="h-8 w-8">
                   <AvatarImage alt="User" />
                   <AvatarFallback className="uppercase">
-                    {session?.user?.handle.slice(0, 2)}
+                    {session?.user?.handle?.slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
               </Button>
