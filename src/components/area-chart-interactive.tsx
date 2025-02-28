@@ -11,6 +11,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -18,6 +19,8 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
+import { Checkbox } from "~/components/ui/checkbox"; // You'll need to create or import this
+import { Label } from "~/components/ui/label"; // You'll need to create or import this
 import {
   Select,
   SelectContent,
@@ -25,11 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { Checkbox } from "~/components/ui/checkbox"; // You'll need to create or import this
-import { Label } from "~/components/ui/label"; // You'll need to create or import this
-import { ChartTooltip, ChartTooltipContent } from "./ui/chart";
-import { useEffect } from "react";
 import { getFinancialChartData } from "~/server/actions/financialChartData";
+import { ChartTooltip, ChartTooltipContent } from "./ui/chart";
 import { Skeleton } from "./ui/skeleton";
 
 const CustomTooltip = ({ active, payload, label }: any) => {

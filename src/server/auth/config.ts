@@ -23,7 +23,6 @@ declare module "next-auth" {
       id: string;
       handle: string | null;
       // ...other properties
-      handle: string;
     } & DefaultSession["user"];
   }
 
@@ -69,7 +68,6 @@ export const authConfig = {
       user: {
         ...session.user,
         id: user.id,
-        handle: user.handle,
       },
     }),
   },

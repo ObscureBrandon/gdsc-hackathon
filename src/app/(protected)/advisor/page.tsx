@@ -17,7 +17,13 @@ import {
   YAxis,
 } from "recharts";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { ChartTooltip } from "~/components/ui/chart";
 import { Input } from "~/components/ui/input";
 import { ScrollArea } from "~/components/ui/scroll-area";
@@ -30,92 +36,172 @@ const CodeBlock = ({
   className?: string;
   children: React.ReactNode;
 }) => {
-  console.log(className);
   if (className === "chart") {
     try {
-      // Existing chart rendering code...
       const chartData = JSON.parse(children as string);
       console.log("Rendering chart data:", chartData);
       const { type, title, data, description, total } = chartData;
 
-      const commonConfig = {
-        primary: {
-          theme: {
-            light: "hsl(var(--primary))",
-            dark: "hsl(var(--primary))",
-          },
-        },
-      };
-
-      const commonChartProps = {
-        width: 500,
-        height: 300,
-        data,
-        margin: { top: 10, right: 30, left: 0, bottom: 0 },
-      };
-
       return (
-        <div className="w-full">
-          {title && <h3 className="mb-2 text-lg font-semibold">{title}</h3>}
-          {description && (
-            <p className="mb-4 text-sm text-muted-foreground">{description}</p>
-          )}
-          <p className="mb-2 text-sm text-muted-foreground">
-            Total: ${total.toLocaleString()}
-          </p>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              {type === "bar" ? (
-                <RechartsBarChart {...commonChartProps}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" />
-                  <YAxis
-                    tickFormatter={(value) => `$${value.toLocaleString()}`}
-                  />
-                  <ChartTooltip />
-                  <Bar
-                    dataKey="value"
-                    fill="var(--color-primary)"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </RechartsBarChart>
-              ) : type === "line" ? (
-                <RechartsLineChart {...commonChartProps}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" />
-                  <YAxis
-                    tickFormatter={(value) => `$${value.toLocaleString()}`}
-                  />
-                  <ChartTooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke="var(--color-primary)"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </RechartsLineChart>
-              ) : (
-                <RechartsAreaChart {...commonChartProps}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" />
-                  <YAxis
-                    tickFormatter={(value) => `$${value.toLocaleString()}`}
-                  />
-                  <ChartTooltip />
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="var(--color-primary)"
-                    fill="var(--color-primary)"
-                    fillOpacity={0.2}
-                    strokeWidth={2}
-                  />
-                </RechartsAreaChart>
-              )}
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <Card className="w-full">
+          <CardHeader className="pb-2">
+            {title && <CardTitle className="text-lg">{title}</CardTitle>}
+            {description && (
+              <CardDescription className="mt-1">{description}</CardDescription>
+            )}
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Total: ${total.toLocaleString()}
+            </p>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                {type === "bar" ? (
+                  <RechartsBarChart
+                    data={data}
+                    margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-muted"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="name"
+                      className="text-sm text-muted-foreground"
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      className="text-sm text-muted-foreground"
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => `$${value.toLocaleString()}`}
+                      width={80}
+                    />
+                    <ChartTooltip
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload) return null;
+                        return (
+                          <div className="rounded-lg border bg-background p-2 shadow-md">
+                            <div className="grid gap-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-medium">{label}</span>
+                                <span className="font-medium">
+                                  ${payload[0]?.value?.toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }}
+                    />
+                    <Bar
+                      dataKey="value"
+                      className="fill-primary"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </RechartsBarChart>
+                ) : type === "line" ? (
+                  <RechartsLineChart
+                    data={data}
+                    margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-muted"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="name"
+                      className="text-sm text-muted-foreground"
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      className="text-sm text-muted-foreground"
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => `$${value.toLocaleString()}`}
+                      width={80}
+                    />
+                    <ChartTooltip
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload) return null;
+                        return (
+                          <div className="rounded-lg border bg-background p-2 shadow-md">
+                            <div className="grid gap-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-medium">{label}</span>
+                                <span className="font-medium">
+                                  ${payload[0]?.value?.toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      className="stroke-primary"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  </RechartsLineChart>
+                ) : (
+                  <RechartsAreaChart
+                    data={data}
+                    margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-muted"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="name"
+                      className="text-sm text-muted-foreground"
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      className="text-sm text-muted-foreground"
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => `$${value.toLocaleString()}`}
+                      width={80}
+                    />
+                    <ChartTooltip
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload) return null;
+                        return (
+                          <div className="rounded-lg border bg-background p-2 shadow-md">
+                            <div className="grid gap-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-medium">{label}</span>
+                                <span className="font-medium">
+                                  ${payload[0]?.value?.toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      className="fill-primary/20 stroke-primary"
+                      strokeWidth={2}
+                    />
+                  </RechartsAreaChart>
+                )}
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
       );
     } catch (error) {
       console.error("Failed to parse chart data:", error);
@@ -188,10 +274,10 @@ export default function FinancialAdvisor() {
   ];
 
   return (
-    <div className="container mx-auto p-4 py-6">
+    <div className="container mx-auto flex min-h-[calc(100vh-65px)] items-center justify-center p-4 py-6">
       <Card className="mx-auto w-full max-w-4xl">
         <CardHeader className="pb-4">
-          <CardTitle className="flex flex-col items-center gap-2">
+          <CardTitle className="flex flex-col items-center gap-2 text-center">
             Your Friendly Neighborhood Financial AI Advisor
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -222,19 +308,19 @@ export default function FinancialAdvisor() {
         </CardHeader>
         <CardContent>
           <ScrollArea className="pr-4" style={{ height: chatHeight }}>
-            <div className="space-y-4">
+            <div className="space-y-4 pb-2">
               {messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
                   <p>
                     Ask me questions about your finances, spending habits, or
                     how to save money.
                   </p>
-                  <div className="mt-6 space-y-2">
+                  <div className="mt-6 flex flex-wrap justify-center gap-2">
                     {examplePrompts.map((prompt, index) => (
                       <button
                         key={index}
                         onClick={() => handleExampleClick(prompt)}
-                        className="mx-1 w-fit rounded-md bg-muted/50 p-2 text-center text-sm transition-colors hover:bg-muted hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="rounded-md bg-muted/50 p-2 text-sm transition-colors hover:bg-muted hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                       >
                         "{prompt}"
                       </button>
