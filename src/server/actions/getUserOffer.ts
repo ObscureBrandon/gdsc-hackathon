@@ -52,7 +52,7 @@ export async function getUserOffer(): Promise<{
     const metrics = await getCurrentUserMetrics();
 
     const response = await fetch(
-      "https://5a6b-156-213-248-243.ngrok-free.app/predict",
+      "https://3b8a-196-132-53-64.ngrok-free.app/predict",
       {
         method: "POST",
         headers: {

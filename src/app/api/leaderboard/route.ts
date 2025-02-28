@@ -77,7 +77,7 @@ export async function GET() {
 
     // Call external API for predictions
     const response = await fetch(
-      "https://5a6b-156-213-248-243.ngrok-free.app/predict-batch",
+      "https://3b8a-196-132-53-64.ngrok-free.app/predict-batch",
       {
         method: "POST",
         headers: {
