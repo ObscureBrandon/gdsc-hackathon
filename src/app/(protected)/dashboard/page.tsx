@@ -1,10 +1,21 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { DashboardContent } from "./DashboardContent";
 import { Skeleton } from "~/components/ui/skeleton";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 export default function Dashboard() {
+  const router = useRouter();
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    if (!session) {
+      router.replace("/");
+    }
+  }, [session, router]);
+
   return (
     <Suspense fallback={<DashboardSkeleton />}>
       <DashboardContent />

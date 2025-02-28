@@ -7,6 +7,7 @@ import {
   DollarSignIcon,
   EyeIcon,
   EyeOffIcon,
+  GiftIcon,
   RefreshCwIcon,
   WalletIcon,
 } from "lucide-react";
@@ -44,6 +45,53 @@ export function DashboardContent() {
   const [bankAccount, setBankAccount] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
+
+  const getUserTier = () => {
+    if (!bankAccount) return "Bronze";
+    const balance = bankAccount.balance;
+
+    if (balance >= 50000) return "Diamond";
+    if (balance >= 20000) return "Platinum";
+    if (balance >= 10000) return "Gold";
+    if (balance >= 5000) return "Silver";
+    return "Bronze";
+  };
+
+  // Add this object with the offers data
+  const offers = {
+    Bronze: [
+      "5% Cashback on Supermarket Purchases",
+      "5% Discount on Electricity and Water Bills",
+      "10% discount on Gym memberships",
+      "Free Coffee at Partner Cafés (once a month)",
+    ],
+    Silver: [
+      "7% Cashback on Restaurant Bills",
+      "Free Movie Ticket (once a month at partner cinemas)",
+      "Annual Health Checkup Package",
+      "50% Discount on Monthly Streaming Subscription",
+    ],
+    Gold: [
+      "10% Cashback on Fashion and Electronics Purchases",
+      "24/7 Priority Customer Support",
+      "Travel Insurance up to $5000 per trip",
+      "SUPERMARKET SALES UP TO 70%",
+    ],
+    Platinum: [
+      "15% Cashback on Flight and Hotel Bookings",
+      "Free 3 month Gym membership",
+      "5 free rides with Traveling sponsor",
+      "Free weekly meal at a fine dining resturant",
+    ],
+    Diamond: [
+      "40% Cashback on All Online and Offline Purchases",
+      "1 Year Free Gym membership",
+      "Exclusive Private Banking Services",
+      "Concert Invitation to LeagueWallets Premium clientele Events ",
+    ],
+  };
+
+  const userTier = getUserTier();
 
   useEffect(() => {
     async function fetchData() {
@@ -219,7 +267,6 @@ export function DashboardContent() {
           </CardContent>
         </Card>
       </div>
-
       {isLoading ? (
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -346,14 +393,15 @@ export function DashboardContent() {
           </CardFooter>
         </Card>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
+      <div className="grid gap-4 lg:grid-cols-4">
+        {/* First row: Quick Actions and Offers side by side */}
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
             <CardDescription>Frequently used features</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {bankAccount ? (
                 <SendMoneyDialog
                   maxAmount={Number(bankAccount.balance)}
@@ -376,7 +424,44 @@ export function DashboardContent() {
             </div>
           </CardContent>
         </Card>
-        <Card className="lg:col-span-2">
+
+        <Card className="overflow-hidden lg:col-span-2">
+          <CardHeader className="bg-gradient-to-r from-amber-500 to-amber-600 text-white">
+            <div className="flex items-center justify-between">
+              <CardTitle>Your {userTier} Offers</CardTitle>
+              <GiftIcon className="h-6 w-6" />
+            </div>
+            <CardDescription className="text-white/80">
+              Special perks for your tier
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} className="h-6 w-full" />
+                ))}
+              </div>
+            ) : (
+              <ul className="space-y-3">
+                {offers[userTier]?.map((offer, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <div className="mt-0.5 h-2 w-2 rounded-full bg-amber-500" />
+                    <span className="text-sm">{offer}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+          <CardFooter className="border-t bg-muted/50 px-6 py-3">
+            <p className="text-xs text-muted-foreground">
+              Offers valid until the end of the month
+            </p>
+          </CardFooter>
+        </Card>
+
+        {/* Second row: Bank Account card spanning full width */}
+        <Card className="lg:col-span-4">
           <CardHeader>
             <CardTitle>Bank Account</CardTitle>
             <CardDescription>Your linked bank account</CardDescription>
