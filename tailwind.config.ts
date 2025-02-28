@@ -63,6 +63,26 @@ export default {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        bronze: {
+          DEFAULT: "#CD7F32",
+          foreground: "#ffffff",
+        },
+        silver: {
+          DEFAULT: "#C0C0C0",
+          foreground: "#000000",
+        },
+        gold: {
+          DEFAULT: "#FFD700",
+          foreground: "#000000",
+        },
+        platinum: {
+          DEFAULT: "#E5E4E2",
+          foreground: "#000000",
+        },
+        diamond: {
+          DEFAULT: "#B9F2FF",
+          foreground: "#000000",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
