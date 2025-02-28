@@ -73,8 +73,8 @@ export async function getUserMetrics(): Promise<UserMetrics[]> {
     return {
       handle: user.handle!,
       monthly_spending: monthlySpending,
-      monthly_savings: 20000,
-      last_month_savings: 1000,
+      monthly_savings: Math.floor(Math.random() * (10000 - 100 + 1)) + 100,
+      last_month_savings: Math.floor(Math.random() * (1000 - 100 + 1)) + 100,
     };
   });
 }
