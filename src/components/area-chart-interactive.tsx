@@ -28,6 +28,9 @@ import {
 import { Checkbox } from "~/components/ui/checkbox"; // You'll need to create or import this
 import { Label } from "~/components/ui/label"; // You'll need to create or import this
 import { ChartTooltip, ChartTooltipContent } from "./ui/chart";
+import { useEffect } from "react";
+import { getFinancialChartData } from "~/server/actions/financialChartData";
+import { Skeleton } from "./ui/skeleton";
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload || !payload.length || !label) {
@@ -70,66 +73,39 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-// Sample chart data
-const generateChartData = () => {
-  const now = new Date();
-  const data = [];
-
-  // Generate data for the past 12 months
-  for (let i = 365; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(now.getDate() - i);
-
-    // Create more realistic financial patterns with some randomness
-    const dayOfWeek = date.getDay();
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-    const baseExpense = isWeekend
-      ? 100 + Math.random() * 200
-      : 50 + Math.random() * 150;
-    const baseIncome = isWeekend
-      ? 50 + Math.random() * 100
-      : 100 + Math.random() * 250;
-
-    // Add some monthly patterns (higher expenses/income at beginning/end of month)
-    const dayOfMonth = date.getDate();
-    const monthFactor = dayOfMonth <= 5 || dayOfMonth >= 25 ? 1.5 : 1;
-
-    // Add some occasional spikes
-    const expenseSpike = Math.random() < 0.05 ? Math.random() * 300 : 0;
-    const incomeSpike = Math.random() < 0.03 ? Math.random() * 500 : 0;
-
-    data.push({
-      date: date.toISOString().split("T")[0],
-      expense: Math.round(baseExpense * monthFactor + expenseSpike),
-      income: Math.round(baseIncome * monthFactor + incomeSpike),
-      balance: 0, // Will calculate after all data points are created
-    });
-  }
-
-  // Calculate running balance
-  let runningBalance = 5000; // Starting balance
-  for (let i = 0; i < data.length; i++) {
-    const item = data[i];
-    if (item) {
-      runningBalance = runningBalance + item.income - item.expense;
-      item.balance = Math.round(runningBalance);
-    }
-  }
-  return data;
-};
-
-const chartData = generateChartData();
-
 export function FinancialAreaChart() {
   const [timeRange, setTimeRange] = React.useState("90d");
+  const [allChartData, setAllChartData] = React.useState<any[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [visibleMetrics, setVisibleMetrics] = React.useState({
     income: true,
     expense: true,
     balance: true,
   });
+
+  // Fetch chart data from server
+  useEffect(() => {
+    async function fetchChartData() {
+      try {
+        setIsLoading(true);
+        const data = await getFinancialChartData(365); // Get a full year of data
+        setAllChartData(data);
+      } catch (error) {
+        console.error("Failed to fetch chart data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchChartData();
+  }, []);
+
+  // Filter data based on selected time range
   const filteredData = React.useMemo(() => {
+    if (!allChartData.length) return [];
+
     const today = new Date();
-    let daysToSubtract = 90;
+    let daysToSubtract: number;
 
     switch (timeRange) {
       case "7d":
@@ -153,15 +129,14 @@ export function FinancialAreaChart() {
 
     const startDate = new Date();
     startDate.setDate(today.getDate() - daysToSubtract);
+    const startDateStr = startDate?.toISOString().split("T")[0] || "";
 
-    return chartData.filter((item) => {
-      // Check if item.date exists before creating a Date object
-      if (!item.date) return false;
-      return new Date(item.date) >= startDate;
-    });
-  }, [timeRange]);
+    return allChartData.filter(
+      (item) => item.date && item.date >= startDateStr,
+    );
+  }, [timeRange, allChartData]);
 
-  const formatCurrency = (value: { toLocaleString: () => any }) => {
+  const formatCurrency = (value: number) => {
     return `$${value.toLocaleString()}`;
   };
 
@@ -170,13 +145,45 @@ export function FinancialAreaChart() {
       // Prevent unchecking the last visible metric
       const newVisibility = { ...prev, [metric]: !prev[metric] };
       const visibleCount = Object.values(newVisibility).filter(Boolean).length;
-
-      if (visibleCount === 0) {
-        return prev; // Keep previous state if trying to uncheck last metric
-      }
-      return newVisibility;
+      return visibleCount === 0 ? prev : newVisibility;
     });
   };
+
+  if (isLoading) {
+    return (
+      <Card className="w-full">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div>
+            <CardTitle>
+              <Skeleton className="h-6 w-40" />
+            </CardTitle>
+            <CardDescription>
+              <Skeleton className="mt-2 h-4 w-60" />
+            </CardDescription>
+          </div>
+          <Skeleton className="h-10 w-[180px]" />
+        </CardHeader>
+        <CardContent className="pt-2">
+          <div className="mb-4 flex items-center gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center space-x-2">
+                <Skeleton className="h-4 w-4 rounded" />
+                <div className="flex items-center">
+                  <Skeleton className="mr-1.5 h-3 w-3 rounded-full" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="h-[350px] w-full">
+            <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border border-dashed p-8">
+              <Skeleton className="h-full w-full rounded-lg opacity-50" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full">
@@ -248,76 +255,84 @@ export function FinancialAreaChart() {
             </Label>
           </div>
         </div>
-        <div className="h-[350px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={filteredData}
-              margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-            >
-              <defs>
-                <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0.1} />
-                </linearGradient>
-                <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1} />
-                </linearGradient>
-                <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="date"
-                tickFormatter={(value) => {
-                  // Add a type check to handle potential undefined values
-                  if (!value) return "";
-                  const date = new Date(value);
-                  return date.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  });
-                }}
-                minTickGap={30}
-              />
-              <YAxis tickFormatter={formatCurrency} width={80} />
-              <Tooltip content={<CustomTooltip />} />
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent hideLabel />}
-              />
-              {visibleMetrics.income && (
-                <Area
-                  type="monotone"
-                  dataKey="income"
-                  stroke="#22c55e"
-                  fill="url(#colorIncome)"
-                  name="Income"
+
+        {filteredData.length === 0 ? (
+          <div className="flex h-[350px] w-full items-center justify-center rounded-lg border border-dashed">
+            <p className="text-sm text-muted-foreground">
+              No financial data available for the selected period
+            </p>
+          </div>
+        ) : (
+          <div className="h-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={filteredData}
+                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0.1} />
+                  </linearGradient>
+                  <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1} />
+                  </linearGradient>
+                  <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(value) => {
+                    if (!value) return "";
+                    const date = new Date(value);
+                    return date.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    });
+                  }}
+                  minTickGap={30}
                 />
-              )}
-              {visibleMetrics.expense && (
-                <Area
-                  type="monotone"
-                  dataKey="expense"
-                  stroke="#ef4444"
-                  fill="url(#colorExpense)"
-                  name="Expense"
+                <YAxis tickFormatter={formatCurrency} width={80} />
+                <Tooltip content={<CustomTooltip />} />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent hideLabel />}
                 />
-              )}
-              {visibleMetrics.balance && (
-                <Area
-                  type="monotone"
-                  dataKey="balance"
-                  stroke="#3b82f6"
-                  fill="url(#colorBalance)"
-                  name="Balance"
-                />
-              )}
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+                {visibleMetrics.income && (
+                  <Area
+                    type="monotone"
+                    dataKey="income"
+                    stroke="#22c55e"
+                    fill="url(#colorIncome)"
+                    name="Income"
+                  />
+                )}
+                {visibleMetrics.expense && (
+                  <Area
+                    type="monotone"
+                    dataKey="expense"
+                    stroke="#ef4444"
+                    fill="url(#colorExpense)"
+                    name="Expense"
+                  />
+                )}
+                {visibleMetrics.balance && (
+                  <Area
+                    type="monotone"
+                    dataKey="balance"
+                    stroke="#3b82f6"
+                    fill="url(#colorBalance)"
+                    name="Balance"
+                  />
+                )}
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

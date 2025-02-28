@@ -73,6 +73,8 @@ export const sessions = createTable(
     userId: varchar("user_id", { length: 255 })
       .notNull()
       .references(() => users.id),
+    //incliude the handle reference from the user table
+    handle: varchar("handle", { length: 255 }).references(() => users.handle),
     expires: timestamp("expires", {
       mode: "date",
       withTimezone: true,
@@ -124,40 +126,12 @@ export const bankAccounts = createTable("bank_account", {
   }).default(sql`CURRENT_TIMESTAMP`),
 });
 
-// Add cards table
-export const cards = createTable("card", {
-  id: varchar("id", { length: 255 })
-    .notNull()
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  userId: varchar("user_id", { length: 255 })
-    .notNull()
-    .references(() => users.id)
-    .unique(), // This ensures one card per user
-  cardNumber: varchar("card_number", { length: 19 }).notNull().unique(),
-  cardholderName: varchar("cardholder_name", { length: 100 }).notNull(),
-  expiryDate: varchar("expiry_date", { length: 5 }).notNull(), // MM/YY format
-  cvv: varchar("cvv", { length: 4 }).notNull(),
-  cardType: varchar("card_type", { length: 20 }).notNull(), // visa, mastercard, etc.
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at", {
-    mode: "date",
-    withTimezone: true,
-  }).default(sql`CURRENT_TIMESTAMP`),
-});
-
-export const cardsRelations = relations(cards, ({ one }) => ({
-  user: one(users, { fields: [cards.userId], references: [users.id] }),
-}));
-
-// Update user relations to include cards
 export const usersRelations = relations(users, ({ one, many }) => ({
   accounts: one(accounts, {
     fields: [users.id],
     references: [accounts.userId],
   }),
   bankAccount: one(bankAccounts), // Changed to one
-  card: one(cards), // Added card relation
   transactions: many(transactions, { relationName: "userTransactions" }),
 }));
 

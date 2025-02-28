@@ -2,7 +2,8 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
-import { users } from "~/server/db/schema";
+import { users, bankAccounts } from "~/server/db/schema";
+import { sql } from "drizzle-orm";
 
 const handleSchema = z
   .string()
@@ -40,6 +41,25 @@ export async function POST(req: Request) {
     // Update user with new handle
     await db.update(users).set({ handle }).where(eq(users.id, session.user.id));
 
+    // Check if the user has a bank account already
+    const existingAccount = await db
+      .select()
+      .from(bankAccounts)
+      .where(sql`user_id = ${session.user.id}`)
+      .limit(1);
+
+    // If no bank account exists, create one
+    if (existingAccount.length === 0) {
+      const accountData = {
+        userId: session.user.id,
+        accountNumber: generateUniqueAccountNumber(),
+        accountName: "Main Checking",
+        balance: "5000.00",
+      };
+
+      await db.insert(bankAccounts).values(accountData);
+    }
+
     return Response.json({ success: true });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -50,4 +70,11 @@ export async function POST(req: Request) {
     }
     return Response.json({ error: "Failed to update handle" }, { status: 500 });
   }
+}
+
+// Helper function to generate a unique bank account number
+function generateUniqueAccountNumber(): string {
+  // Generate a 10-digit account number
+  const randomNum = Math.floor(1000000000 + Math.random() * 9000000000);
+  return randomNum.toString();
 }

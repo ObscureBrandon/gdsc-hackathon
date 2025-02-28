@@ -1,4 +1,4 @@
-import { db } from "~/server/db/indexScript";
+/* import { db } from "~/server/db/indexScript";
 import {
   users,
   bankAccounts,
@@ -305,3 +305,4 @@ async function updateBalances(userId: string) {
     throw error;
   }
 }
+ */
