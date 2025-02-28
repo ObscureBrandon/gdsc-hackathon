@@ -20,7 +20,7 @@ export async function getUserBankAccount(): Promise<BankAccount | null> {
 
   const userId = session.user.id;
 
-  const accounts = await db
+  const accounts = await db 
     .select({
       id: bankAccounts.id,
       accountNumber: bankAccounts.accountNumber,
