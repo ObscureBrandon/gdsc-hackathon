@@ -3,6 +3,7 @@ import "~/styles/globals.css";
 import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
 import { SessionProvider } from "next-auth/react";
+import { Toaster } from "~/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "League Wallet",
@@ -30,6 +31,7 @@ export default function RootLayout({
                 </p>
               </footer>
             </main>
+            <Toaster />
           </div>
         </body>
       </html>
