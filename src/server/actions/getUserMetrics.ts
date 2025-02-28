@@ -74,7 +74,7 @@ export async function getUserMetrics(): Promise<UserMetrics[]> {
       handle: user.handle!,
       monthly_spending: monthlySpending,
       monthly_savings: 20000,
-      last_month_savings: lastMonthSavings,
+      last_month_savings: 1000,
     };
   });
 }
