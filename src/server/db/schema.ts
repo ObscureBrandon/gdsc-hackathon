@@ -1,16 +1,16 @@
 import { relations, sql } from "drizzle-orm";
 import {
+  boolean,
+  decimal,
   index,
   integer,
+  pgEnum,
   pgTableCreator,
+  PgTableWithColumns,
   primaryKey,
   text,
   timestamp,
   varchar,
-  decimal,
-  boolean,
-  pgEnum,
-  PgTableWithColumns,
 } from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";
 
@@ -22,6 +22,7 @@ export const users = createTable("user", {
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   name: varchar("name", { length: 255 }),
+  handle: varchar("handle", { length: 255 }).notNull().unique(),
   email: varchar("email", { length: 255 }).notNull(),
   emailVerified: timestamp("email_verified", {
     mode: "date",
