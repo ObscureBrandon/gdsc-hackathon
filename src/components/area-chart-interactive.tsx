@@ -220,7 +220,6 @@ export function FinancialAreaChart() {
               htmlFor="income"
               className="flex items-center text-sm font-medium"
             >
-              <span className="mr-1.5 h-3 w-3 rounded-full bg-[#22c55e]"></span>
               Income
             </Label>
           </div>
@@ -235,7 +234,6 @@ export function FinancialAreaChart() {
               htmlFor="expense"
               className="flex items-center text-sm font-medium"
             >
-              <span className="mr-1.5 h-3 w-3 rounded-full bg-[#ef4444]"></span>
               Expense
             </Label>
           </div>
@@ -250,7 +248,6 @@ export function FinancialAreaChart() {
               htmlFor="balance"
               className="flex items-center text-sm font-medium"
             >
-              <span className="mr-1.5 h-3 w-3 rounded-full bg-[#3b82f6]"></span>
               Balance
             </Label>
           </div>

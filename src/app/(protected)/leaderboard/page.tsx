@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -70,8 +70,8 @@ export default function LeaderboardPage() {
   const renderLeaderboardRows = () => {
     if (isLoading) {
       return Array.from({ length: 5 }).map((_, i) => (
-        <TableRow key={i}>
-          <TableCell>
+        <TableRow key={i + "-skeleton"}>
+          <TableCell key={i + "-rank"}>
             <Skeleton className="h-4 w-8" />
           </TableCell>
           <TableCell>
@@ -93,8 +93,9 @@ export default function LeaderboardPage() {
       const isNewCluster = currentCluster !== entry.cluster;
       currentCluster = entry.cluster;
 
+      // Use a unique key for each fragment
       return (
-        <>
+        <Fragment key={`${entry.handle}-group`}>
           {isNewCluster && (
             <TableRow className="bg-muted/30">
               <TableCell colSpan={4} className="py-4">
@@ -118,7 +119,11 @@ export default function LeaderboardPage() {
           )}
           <TableRow
             key={entry.handle}
-            className={isCurrentUser ? "bg-muted/50 hover:bg-muted" : undefined}
+            className={
+              isCurrentUser
+                ? "bg-muted/50 hover:bg-muted/30"
+                : "hover:bg-muted/20"
+            }
           >
             <TableCell className="font-medium">
               #{index + 1}
@@ -130,9 +135,9 @@ export default function LeaderboardPage() {
             <TableCell>
               <Badge
                 variant="secondary"
-                className={
+                className={`transition-colors ${
                   TIER_COLORS[entry.cluster as keyof typeof TIER_COLORS]
-                }
+                } hover:bg-opacity-75`}
               >
                 {TIER_NAMES[entry.cluster]}
               </Badge>
@@ -141,7 +146,7 @@ export default function LeaderboardPage() {
               {entry.points.toFixed(2)}
             </TableCell>
           </TableRow>
-        </>
+        </Fragment>
       );
     });
   };

@@ -3,13 +3,14 @@
 import { and, eq, sql } from "drizzle-orm";
 import { auth } from "~/server/auth";
 import { db } from "~/server/db/index";
-import { bankAccounts, transactions } from "~/server/db/schema";
+import { bankAccounts, transactions, users } from "~/server/db/schema";
 
 export type TransferParams = {
   amount: number;
   description?: string;
   senderAccountId: string;
   receiverAccountNumber: string;
+  categoryId?: string; // Add categoryId parameter
 };
 
 export async function createTransfer(
@@ -49,31 +50,43 @@ export async function createTransfer(
     return { success: false, message: "Insufficient balance" };
   }
 
-  // Find receiver account by account number
+  // First find user by handle
+  const receiverUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.handle, receiverAccountNumber))
+    .limit(1);
+
+  if (receiverUser.length === 0 || !receiverUser[0]) {
+    return { success: false, message: "Recipient not found" };
+  }
+
+  // Find receiver account by user ID
   const receiverAccount = await db
     .select()
     .from(bankAccounts)
-    .where(eq(bankAccounts.accountNumber, receiverAccountNumber))
+    .where(eq(bankAccounts.userId, receiverUser[0].id))
     .limit(1);
 
   if (receiverAccount.length === 0 || !receiverAccount[0]) {
-    return { success: false, message: "Receiver account not found" };
+    return { success: false, message: "Recipient has no bank account" };
   }
 
   // Begin transaction
   try {
-    // Create transaction record
     const [transaction] = await db
       .insert(transactions)
       .values({
         type: "transfer",
         amount: amount.toString(),
         description:
-          description || `Transfer to ${receiverAccount[0].accountName}`,
+          description ||
+          `Transfer to ${receiverUser[0].name || receiverUser[0].handle}`,
         senderAccountId: senderAccountId,
         receiverAccountId: receiverAccount[0].id,
         status: "completed",
-        merchantName: receiverAccount[0].accountName,
+        merchantName: receiverUser[0].name || receiverUser[0].handle,
+        categoryId: params.categoryId, // Add this line to include the category
       })
       .returning();
 

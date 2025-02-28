@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import {
   ArrowRightIcon,
   Bot,
-  EyeIcon,
-  EyeOffIcon,
+  Trophy,
   LayoutDashboardIcon,
   LogOutIcon,
   MenuIcon,
@@ -36,11 +34,20 @@ export default function ProtectedLayout({
   const pathname = usePathname();
   const { data: session } = useSession();
 
+  // Check if we're on the onboarding page
+  const isOnboarding = pathname === "/onboarding";
+
+  // If on onboarding page, render a simplified layout without navigation
+  if (isOnboarding) {
+    return <main className="flex-1">{children}</main>;
+  }
+
   // Navigation items shared across protected routes
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
     { name: "Transactions", href: "/transactions", icon: ArrowRightIcon },
     { name: "AI Advisor", href: "/advisor", icon: Bot },
+    { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
   ];
 
   return (
